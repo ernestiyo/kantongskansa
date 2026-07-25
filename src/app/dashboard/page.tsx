@@ -7,16 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRupiah } from "@/lib/format";
 import { buildCategoryBudgets } from "@/lib/budget";
+import { buildMonthlyTrend } from "@/lib/trend";
 import { IncomeForm } from "./income-form";
 import { CategoryForm } from "./category-form";
 import { CategoryList } from "./category-list";
 import { TransactionForm } from "./transaction-form";
 import { TransactionList } from "./transaction-list";
+import { TransactionFilters } from "./transaction-filters";
 import { BudgetDonut } from "./budget-donut";
+import { MonthlyTrend } from "./monthly-trend";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; from?: string; to?: string }>;
+}) {
   const session = await auth();
   const userId = session!.user.id;
+  const filters = await searchParams;
 
   const [user] = await db
     .select()
@@ -73,6 +81,18 @@ export default async function DashboardPage() {
     monthlyIncome,
   );
   const overBudgetCategories = categoryBudgets.filter((c) => c.isOverBudget);
+  const monthlyTrendPoints = buildMonthlyTrend(userTransactionsRaw);
+
+  const categoryFilter =
+    filters.category && filters.category !== "all" ? filters.category : null;
+  const fromFilter = filters.from || null;
+  const toFilter = filters.to || null;
+  const filteredTransactions = userTransactionsRaw.filter((t) => {
+    if (categoryFilter && t.categoryId !== categoryFilter) return false;
+    if (fromFilter && t.date < fromFilter) return false;
+    if (toFilter && t.date > toFilter) return false;
+    return true;
+  });
 
   const needsOnboarding = monthlyIncome === 0;
 
@@ -167,6 +187,15 @@ export default async function DashboardPage() {
       </section>
 
       <section className="space-y-3">
+        <h2 className="font-medium">Tren bulanan</h2>
+        <Card>
+          <CardContent>
+            <MonthlyTrend points={monthlyTrendPoints} />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-medium">Transaksi</h2>
           <TransactionForm
@@ -174,9 +203,11 @@ export default async function DashboardPage() {
             triggerLabel="Tambah transaksi"
           />
         </div>
+        <TransactionFilters categories={categoryOptions} />
         <TransactionList
-          transactions={userTransactionsRaw}
+          transactions={filteredTransactions}
           categories={categoryOptions}
+          hasAnyTransactions={userTransactionsRaw.length > 0}
         />
       </section>
     </div>

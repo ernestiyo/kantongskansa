@@ -84,14 +84,18 @@ function DeleteTransactionButton({ id }: { id: string }) {
 export function TransactionList({
   transactions,
   categories,
+  hasAnyTransactions = transactions.length > 0,
 }: {
   transactions: TransactionRow[];
   categories: CategoryOption[];
+  hasAnyTransactions?: boolean;
 }) {
   if (transactions.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Belum ada transaksi. Tambahkan transaksi pertamamu.
+        {hasAnyTransactions
+          ? "Tidak ada transaksi yang cocok dengan filter ini."
+          : "Belum ada transaksi. Tambahkan transaksi pertamamu."}
       </p>
     );
   }
