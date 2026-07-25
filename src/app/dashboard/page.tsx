@@ -3,13 +3,16 @@ import { auth, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import { categories, transactions, users } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRupiah } from "@/lib/format";
+import { buildCategoryBudgets } from "@/lib/budget";
 import { IncomeForm } from "./income-form";
 import { CategoryForm } from "./category-form";
 import { CategoryList } from "./category-list";
 import { TransactionForm } from "./transaction-form";
 import { TransactionList } from "./transaction-list";
+import { BudgetDonut } from "./budget-donut";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -55,6 +58,21 @@ export default async function DashboardPage() {
     id: c.id,
     name: c.name,
   }));
+
+  const expenseByCategory = new Map<string, number>();
+  for (const t of userTransactionsRaw) {
+    if (t.type !== "expense") continue;
+    expenseByCategory.set(
+      t.categoryId,
+      (expenseByCategory.get(t.categoryId) ?? 0) + Number(t.amount),
+    );
+  }
+  const categoryBudgets = buildCategoryBudgets(
+    userCategories,
+    expenseByCategory,
+    monthlyIncome,
+  );
+  const overBudgetCategories = categoryBudgets.filter((c) => c.isOverBudget);
 
   const needsOnboarding = monthlyIncome === 0;
 
@@ -103,6 +121,18 @@ export default async function DashboardPage() {
                 Pengeluaran sudah melebihi pemasukan.
               </p>
             )}
+            {overBudgetCategories.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-sm text-muted-foreground">
+                  Overbudget:
+                </span>
+                {overBudgetCategories.map((c) => (
+                  <Badge key={c.id} variant="destructive">
+                    {c.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
             <div className="flex flex-wrap gap-4 pt-2 text-sm text-muted-foreground">
               <span>Pemasukan bulanan: {formatRupiah(monthlyIncome)}</span>
               <span>Total pemasukan: {formatRupiah(totalIncome)}</span>
@@ -120,11 +150,20 @@ export default async function DashboardPage() {
       )}
 
       <section className="space-y-3">
+        <h2 className="font-medium">Breakdown 50/30/20</h2>
+        <Card>
+          <CardContent>
+            <BudgetDonut categories={categoryBudgets} />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-medium">Kategori</h2>
           <CategoryForm triggerLabel="Tambah kategori" variant="outline" />
         </div>
-        <CategoryList categories={userCategories} />
+        <CategoryList categories={categoryBudgets} />
       </section>
 
       <section className="space-y-3">

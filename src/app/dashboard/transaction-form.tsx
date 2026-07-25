@@ -97,6 +97,7 @@ export function TransactionForm({
       return;
     }
     toast.success(isEdit ? "Transaksi diperbarui" : "Transaksi ditambahkan");
+    if (result.warning) toast.warning(result.warning);
     setOpen(false);
   };
 
