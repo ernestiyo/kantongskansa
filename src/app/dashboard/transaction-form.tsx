@@ -87,6 +87,15 @@ export function TransactionForm({
     defaultValues,
   });
 
+  const typeItems = [
+    { label: "Pengeluaran", value: "expense" },
+    { label: "Pemasukan", value: "income" },
+  ];
+  const categoryItems = categories.map((category) => ({
+    label: category.name,
+    value: category.id,
+  }));
+
   const onSubmit = async (data: TransactionInput) => {
     const result = isEdit
       ? await updateTransaction(transaction.id, data)
@@ -125,7 +134,11 @@ export function TransactionForm({
               name="type"
               control={control}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  items={typeItems}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih tipe" />
                   </SelectTrigger>
@@ -147,7 +160,11 @@ export function TransactionForm({
               name="categoryId"
               control={control}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  items={categoryItems}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>

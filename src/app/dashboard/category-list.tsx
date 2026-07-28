@@ -108,8 +108,13 @@ export function CategoryList({
                 <>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className={`h-full rounded-full ${category.isOverBudget ? "bg-destructive" : "bg-primary"}`}
-                      style={{ width: `${progress}%` }}
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${progress}%`,
+                        backgroundColor: category.isOverBudget
+                          ? "var(--destructive)"
+                          : category.color,
+                      }}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
